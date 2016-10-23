@@ -13,13 +13,52 @@ import (
 )
 
 func Test_ConfigForArgs(t *testing.T) {
-	tests := map[string][]string{
-		"help":    []string{"--help"},
-		"regular": []string{"--help"},
+	type x struct {
+		cfg  BrainiacConfig
+		Args []string
 	}
-	for tname, args := range tests {
-		t.Logf("Checking %v", tname)
-		c := ConfigForArgs(args)
-		t.Log(c)
+
+	tests := map[string]x{
+		"defaults": x{
+			cfg: BrainiacConfig{
+				Driver:       "sqlite3",
+				Source:       "brainiac.db",
+				PIDLock:      "brianiac.pid",
+				ListenHTTP:   false,
+				HTTPUser:     "brainiac",
+				HTTPPassword: "brainiac",
+				HTTPListen:   "*:8080",
+				ListenUDP:    false,
+				UDPPort:      8080,
+				ListenZmq:    false,
+				ZmqAllow:     []string{},
+				ZmqListen:    "tcp://*:8081",
+			},
+		},
+		"multiple zmq allows": x{
+			Args: []string{"-a", "host1", "-a", "host2"},
+			cfg: BrainiacConfig{
+				Driver:       "sqlite3",
+				Source:       "brainiac.db",
+				PIDLock:      "brianiac.pid",
+				ListenHTTP:   false,
+				HTTPUser:     "brainiac",
+				HTTPPassword: "brainiac",
+				HTTPListen:   "*:8080",
+				ListenUDP:    false,
+				UDPPort:      8080,
+				ListenZmq:    false,
+				ZmqAllow:     []string{"host1", "host2"},
+				ZmqListen:    "tcp://*:8081",
+			},
+		},
+	}
+	for tname, x := range tests {
+		if c := ConfigForArgs(x.Args); !c.Equals(x.cfg) {
+			t.Logf("Checking %q", tname)
+			t.Logf("Got: %v", c)
+			t.Logf("Wnt: %v", &x.cfg)
+			t.Errorf("Didnt get what I expected")
+		}
 	}
 }

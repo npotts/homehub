@@ -24,7 +24,7 @@ var (
 	listenUDP    = app.Flag("udp", `Listen for requests over UDP`).Short('u').Default("False").Bool()
 	udpPort      = app.Flag("udp-port", `Port to listen for incoming UDP packets on`).Short('U').Default("8080").Int()
 	listenZmq    = app.Flag("zmq", `Listen for requests over ZMQ`).Short('z').Default("False").Bool()
-	zmqAllow     = app.Flag("zmq-allow", `Allow ZMQ access from these hosts alone`).Short('a').Default("").Strings()
+	zmqAllow     = app.Flag("zmq-allow", `Allow ZMQ access from these hosts alone`).Short('a').Strings()
 	zmqListen    = app.Flag("zmq-listen", `Port to listen for incoming ZMQ clients`).Short('Z').Default("tcp://*:8081").String()
 )
 
@@ -67,4 +67,26 @@ type BrainiacConfig struct {
 	ListenZmq bool
 	ZmqAllow  []string
 	ZmqListen string
+}
+
+/*Equals returns true both configs are the same*/
+func (b BrainiacConfig) Equals(a BrainiacConfig) bool {
+	same := len(b.ZmqAllow) == len(a.ZmqAllow)
+	if same {
+		for i := range b.ZmqAllow {
+			same = same && (b.ZmqAllow[i] == a.ZmqAllow[i])
+		}
+	}
+	return same &&
+		b.Driver == a.Driver &&
+		b.Source == a.Source &&
+		b.PIDLock == a.PIDLock &&
+		b.ListenHTTP == a.ListenHTTP &&
+		b.HTTPUser == a.HTTPUser &&
+		b.HTTPPassword == a.HTTPPassword &&
+		b.HTTPListen == a.HTTPListen &&
+		b.ListenUDP == a.ListenUDP &&
+		b.UDPPort == a.UDPPort &&
+		b.ListenZmq == a.ListenZmq &&
+		b.ZmqListen == a.ZmqListen
 }
