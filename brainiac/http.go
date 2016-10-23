@@ -98,9 +98,13 @@ func (h *httpd) handleJson(r *http.Request, fxn regstore) error {
 		return errors.New("Invalid HTTP data")
 	}
 
-	m := map[string]interface{}{}
+	m := Datam{}
 	if err := json.Unmarshal(data, &m); err != nil {
 		return err
+	}
+
+	if !m.Valid() {
+		return errors.New("Invalid HTTP data, didnt populated m")
 	}
 
 	return (*fxn)(mux.Vars(r)["table"], m)
