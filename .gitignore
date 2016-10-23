@@ -22,3 +22,7 @@ _testmain.go
 *.exe
 *.test
 *.prof
+
+
+cover.html
+cover.out
