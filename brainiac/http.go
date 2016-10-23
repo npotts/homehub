@@ -91,6 +91,7 @@ func (h *httpd) auth(w http.ResponseWriter, r *http.Request, next http.HandlerFu
 	w.WriteHeader(http.StatusUnauthorized)
 }
 
+/*breaks up json data */
 func (h *httpd) handleJson(r *http.Request, fxn regstore) error {
 	data := make([]byte, r.ContentLength)
 	if n, err := r.Body.Read(data); int64(n) != r.ContentLength || err != nil {
@@ -114,6 +115,7 @@ func (h *httpd) put(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusOK)
 }
 
+/*post handles 'inserting' actual data*/
 func (h *httpd) post(w http.ResponseWriter, r *http.Request) {
 	if err := h.handleJson(r, h.storeFxn); err != nil {
 		w.WriteHeader(http.StatusBadRequest)
