@@ -16,19 +16,40 @@ import (
 type regstore *func(table string, datam Datam) error
 
 //something from a-z and A-Z
-type alphabet string
+type alphabetic string
 
 var realph = regexp.MustCompile("[a-zA-Z]+") //at least one char
 
 /*Valid returns true only if it contains valid characters*/
-func (a alphabet) Valid() bool {
+func (a alphabetic) Valid() bool {
 	return realph.MatchString(string(a))
+}
+
+type fieldmode int
+
+const (
+	fmInvalid fieldmode = iota
+	fmNull
+	fmInt
+	fmFloat
+	fmBool
+	fmString
+)
+
+type Field struct {
+	raw  []byte
+	mode fieldmode
+}
+
+func (f *Field) UnmarshalJSON(incoming []byte) error {
+	f.raw, f.mode = incoming, fmInvalid
+	//
 }
 
 /*Datam is what all insertable things should map to*/
 type Datam struct {
-	Table alphabet                 `json:"table"`
-	Data  map[alphabet]interface{} `json:"data"`
+	Table alphabetic                 `json:"table"`
+	Data  map[alphabetic]interface{} `json:"data"`
 }
 
 func (d Datam) Valid() bool {
