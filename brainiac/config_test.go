@@ -12,8 +12,14 @@ import (
 	"testing"
 )
 
-func TestParse(t *testing.T) {
-	args := []string{"--help"}
-	parse(args)
-	// fmt.Println(config)
+func Test_ConfigForArgs(t *testing.T) {
+	tests := map[string][]string{
+		"help":    []string{"--help"},
+		"regular": []string{"--help"},
+	}
+	for tname, args := range tests {
+		t.Logf("Checking %v", tname)
+		c := ConfigForArgs(args)
+		t.Log(c)
+	}
 }
