@@ -26,3 +26,4 @@ _testmain.go
 
 cover.html
 cover.out
+*.sublime-workspace

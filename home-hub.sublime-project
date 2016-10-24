@@ -2,6 +2,21 @@
 	"folders":
 	[
 		{
+			"file_exclude_patterns":
+			[
+				"*.sublime-project",
+				".gitmodules",
+				"cover.out",
+				"cover.html",
+				"*_stringer.go",
+				".cache", ".cache.lock",
+				".log",
+			],
+			"folder_exclude_patterns":
+			[
+				".git"
+			],
+			"name": "Homehub",
 			"path": "."
 		}
 	]
