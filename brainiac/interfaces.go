@@ -11,6 +11,7 @@ package brainiac
 import (
 	"fmt"
 	"regexp"
+	"strconv"
 )
 
 /*function call to both register and store data*/
@@ -39,7 +40,6 @@ const (
 
 /*Field is a JSON parsable*/
 type Field struct {
-	raw   []byte
 	mode  fieldmode
 	Value interface{}
 }
@@ -50,43 +50,47 @@ func (f Field) Valid() bool {
 }
 
 var (
-	reNull   = regexp.MustCompile("^null$")
-	reInt    = regexp.MustCompile(`^-?0|[1-9]\d*$`)
-	reBool   = regexp.MustCompile(`^true|false$`)
-	reNumber = regexp.MustCompile(`^-?(?:0|[1-9]\d*)(?:\.\d+)?(?:[eE][+-]?\d+)?`)
-	reString = regexp.MustCompile(`^".*"$`)
+	reNull    = regexp.MustCompile("^null$")
+	reInt     = regexp.MustCompile(`^-?0|[1-9]\d*$`)
+	reBool    = regexp.MustCompile(`^true|false$`)
+	reNumber  = regexp.MustCompile(`^-?(?:0|[1-9]\d*)(?:\.\d+)?(?:[eE][+-]?\d+)?`)
+	reString  = regexp.MustCompile(`^".*"$`)
+	errFormat = fmt.Errorf("Unable to convert to a Field Value")
 )
 
 /*UnmarshalJSON conforms to the json.Unmarshaller interface*/
-func (f *Field) UnmarshalJSON(incoming []byte) error {
-	f.raw, f.mode = incoming, fmInvalid
-	//null check
-	if reNull.Match(incoming) {
-		f.mode = fmNull
-		f.Value = nil
-		return nil
+func (f *Field) UnmarshalJSON(incoming []byte) (err error) {
+	raws := string(incoming)
+
+	if reNull.Match(incoming) { //null check
+		f.mode, f.Value = fmNull, nil
+		return
 	}
-	if reBool.Match(incoming) {
+
+	if reBool.Match(incoming) { //bool check
 		f.mode = fmBool
-		return nil
-		// f.Value =
+		f.Value, err = strconv.ParseBool(raws)
+		return
 	}
 	if reInt.Match(incoming) {
 		f.mode = fmInt
-		return nil
+		f.Value, err = strconv.ParseInt(raws, 10, 64)
+		return
 	}
 
-	if reNumber.Match(incoming) {
+	if reNumber.Match(incoming) { //floatting point
 		f.mode = fmFloat
-		return nil
+		f.Value, err = strconv.ParseFloat(raws, 64)
+		return
 	}
 
 	if reString.Match(incoming) {
 		f.mode = fmString
-		return nil
+		f.Value = raws[1 : len(raws)-1]
+		return
 	}
 
-	return fmt.Errorf("Unable to convert to a Field Value")
+	return errFormat
 }
 
 /*Datam is what all insertable things should map to*/
@@ -102,6 +106,20 @@ func (d Datam) Valid() bool {
 		ok = ok && label.Valid() && value.Valid()
 	}
 	return ok
+}
+
+/*Equal returns true if a is the same as d*/
+func (d *Datam) Equal(a *Datam) bool {
+	same := d.Table == a.Table
+	for key, val := range d.Data {
+		_, ok := a.Data[key]
+		same = same && key.Valid() && val.Valid() && ok
+	}
+	for key, val := range a.Data {
+		_, ok := d.Data[key]
+		same = same && key.Valid() && val.Valid() && ok
+	}
+	return same
 }
 
 /*listener listen on something and call registerFxn when*/
