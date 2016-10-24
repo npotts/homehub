@@ -19,14 +19,12 @@ import (
 )
 
 type httpd struct {
-	httpd            *graceful.Server
-	mux              *mux.Router
-	negroni          *negroni.Negroni
-	regFxn, storeFxn regstore
-
-	//http info
-	user string
-	pass string
+	httpd            *graceful.Server //stoppable server
+	mux              *mux.Router      //http router
+	negroni          *negroni.Negroni //middelware
+	regFxn, storeFxn regstore         //callback fxns
+	user             string           //http info
+	pass             string           //password
 }
 
 func newHTTP(cfg Config, reg, store regstore) error {
