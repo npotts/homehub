@@ -30,7 +30,7 @@ type httpd struct {
 	pass string
 }
 
-func newHttp(cfg BrainiacConfig, reg, store regstore) error {
+func newHTTP(cfg BrainiacConfig, reg, store regstore) error {
 	err := make(chan error)
 	defer close(err)
 	neg := negroni.Classic()
