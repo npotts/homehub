@@ -29,9 +29,9 @@ var (
 )
 
 /*ConfigForArgs returns a Brainiac config for a given set of arguments.*/
-func ConfigForArgs(args []string) *BrainiacConfig {
+func ConfigForArgs(args []string) *Config {
 	kingpin.MustParse(app.Parse(args))
-	return &BrainiacConfig{
+	return &Config{
 		Driver:       *driver,
 		Source:       *source,
 		PIDLock:      *pidlock,
@@ -47,8 +47,8 @@ func ConfigForArgs(args []string) *BrainiacConfig {
 	}
 }
 
-/*BrainiacConfig is a configuration structure for a brianiac instance*/
-type BrainiacConfig struct {
+/*Config is a configuration structure for a brianiac instance*/
+type Config struct {
 	Driver  string
 	Source  string
 	PIDLock string
@@ -70,7 +70,7 @@ type BrainiacConfig struct {
 }
 
 /*Equals returns true both configs are the same*/
-func (b BrainiacConfig) Equals(a BrainiacConfig) bool {
+func (b Config) Equals(a Config) bool {
 	same := len(b.ZmqAllow) == len(a.ZmqAllow)
 	if same {
 		for i := range b.ZmqAllow {

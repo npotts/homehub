@@ -9,7 +9,6 @@
 package brainiac
 
 import (
-	// "github.com/gorilla/context"
 	"encoding/json"
 	"github.com/gorilla/mux"
 	"github.com/pkg/errors"
@@ -30,7 +29,7 @@ type httpd struct {
 	pass string
 }
 
-func newHTTP(cfg BrainiacConfig, reg, store regstore) error {
+func newHTTP(cfg Config, reg, store regstore) error {
 	err := make(chan error)
 	defer close(err)
 	neg := negroni.Classic()
@@ -91,8 +90,8 @@ func (h *httpd) auth(w http.ResponseWriter, r *http.Request, next http.HandlerFu
 	w.WriteHeader(http.StatusUnauthorized)
 }
 
-/*breaks up json data */
-func (h *httpd) handleJson(r *http.Request, fxn regstore) error {
+/*handleJSON breaks up json data*/
+func (h *httpd) handleJSON(r *http.Request, fxn regstore) error {
 	data := make([]byte, r.ContentLength)
 	if n, err := r.Body.Read(data); int64(n) != r.ContentLength || err != nil {
 		return errors.New("Invalid HTTP data")
@@ -112,7 +111,7 @@ func (h *httpd) handleJson(r *http.Request, fxn regstore) error {
 
 /*put handles incoming data formats to register*/
 func (h *httpd) put(w http.ResponseWriter, r *http.Request) {
-	if err := h.handleJson(r, h.regFxn); err != nil {
+	if err := h.handleJSON(r, h.regFxn); err != nil {
 		w.WriteHeader(http.StatusBadRequest)
 		return
 	}
@@ -121,7 +120,7 @@ func (h *httpd) put(w http.ResponseWriter, r *http.Request) {
 
 /*post handles 'inserting' actual data*/
 func (h *httpd) post(w http.ResponseWriter, r *http.Request) {
-	if err := h.handleJson(r, h.storeFxn); err != nil {
+	if err := h.handleJSON(r, h.storeFxn); err != nil {
 		w.WriteHeader(http.StatusBadRequest)
 		return
 	}

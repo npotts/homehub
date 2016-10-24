@@ -37,6 +37,7 @@ const (
 	fmString
 )
 
+/*Field is a JSON parsable*/
 type Field struct {
 	raw   []byte
 	mode  fieldmode

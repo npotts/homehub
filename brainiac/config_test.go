@@ -14,13 +14,13 @@ import (
 
 func Test_ConfigForArgs(t *testing.T) {
 	type x struct {
-		cfg  BrainiacConfig
+		cfg  Config
 		Args []string
 	}
 
 	tests := map[string]x{
 		"defaults": x{
-			cfg: BrainiacConfig{
+			cfg: Config{
 				Driver:       "sqlite3",
 				Source:       "brainiac.db",
 				PIDLock:      "brianiac.pid",
@@ -37,7 +37,7 @@ func Test_ConfigForArgs(t *testing.T) {
 		},
 		"multiple zmq allows": x{
 			Args: []string{"-a", "host1", "-a", "host2"},
-			cfg: BrainiacConfig{
+			cfg: Config{
 				Driver:       "sqlite3",
 				Source:       "brainiac.db",
 				PIDLock:      "brianiac.pid",
