@@ -10,13 +10,17 @@ package brainiac
 
 import (
 	"encoding/json"
+	"fmt"
 	"github.com/gorilla/mux"
+	"github.com/npotts/go-patterns/stoppable"
 	"github.com/pkg/errors"
+	"github.com/tylerb/graceful"
 	"github.com/urfave/negroni"
-	"gopkg.in/tylerb/graceful.v1"
 	"net/http"
 	"time"
 )
+
+var _ = fmt.Println
 
 type httpd struct {
 	httpd            *graceful.Server //stoppable server
@@ -25,6 +29,7 @@ type httpd struct {
 	regFxn, storeFxn regstore         //callback fxns
 	user             string           //http info
 	pass             string           //password
+	stopper          stoppable.Halter //atomic halter
 }
 
 func newHTTP(cfg Config, reg, store regstore) (*httpd, error) {
@@ -32,10 +37,11 @@ func newHTTP(cfg Config, reg, store regstore) (*httpd, error) {
 	defer close(err)
 	neg := negroni.Classic()
 	h := &httpd{
+		stopper: stoppable.NewStopable(),
 		mux:     mux.NewRouter(),
 		negroni: neg,
 		httpd: &graceful.Server{
-			Timeout: 0, //no timeout, which has its own set of issues
+			Timeout: 100 * time.Millisecond, //no timeout, which has its own set of issues
 			Server: &http.Server{
 				Addr:           cfg.HTTPListen,
 				Handler:        neg,
@@ -73,9 +79,12 @@ func (h *httpd) monitor(startup chan error) {
 
 /*stop kills the service*/
 func (h *httpd) stop() {
-	c := h.httpd.StopChan()
-	go func() { h.httpd.Stop(100 * time.Millisecond) }()
-	<-c
+	defer h.stopper.Die()
+	if h.stopper.Alive() {
+		c := h.httpd.StopChan()
+		go func() { h.httpd.Stop(100 * time.Millisecond) }()
+		<-c
+	}
 	return
 }
 
