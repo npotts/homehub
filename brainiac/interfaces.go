@@ -122,7 +122,7 @@ func (d *Datam) Equal(a *Datam) bool {
 	return same
 }
 
-/*listener listen on something and call registerFxn when*/
-type stoppable interface {
-	stop()
-}
+// listener listen on something and call registerFxn when
+// type stoppable interface {
+// 	stop()
+// }
