@@ -15,7 +15,7 @@ import (
 )
 
 /*function call to both register and store data*/
-type regstore *func(table string, datam Datam) error
+type regstore func(table string, datam Datam) error
 
 //something from a-z and A-Z
 type alphabetic string

@@ -27,7 +27,7 @@ type httpd struct {
 	pass             string           //password
 }
 
-func newHTTP(cfg Config, reg, store regstore) error {
+func newHTTP(cfg Config, reg, store regstore) (*httpd, error) {
 	err := make(chan error)
 	defer close(err)
 	neg := negroni.Classic()
@@ -55,7 +55,7 @@ func newHTTP(cfg Config, reg, store regstore) error {
 	h.negroni.UseHandler(h.mux)
 
 	go h.monitor(err)
-	return <-err
+	return h, <-err
 }
 
 /*monitor starts the HTTP server and attempts to keep it going*/
@@ -104,7 +104,7 @@ func (h *httpd) handleJSON(r *http.Request, fxn regstore) error {
 		return errors.New("Invalid HTTP data, didnt populated m")
 	}
 
-	return (*fxn)(mux.Vars(r)["table"], m)
+	return fxn(mux.Vars(r)["table"], m)
 }
 
 /*put handles incoming data formats to register*/
