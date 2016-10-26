@@ -1,12 +1,12 @@
 /*
- GNU GENERAL PUBLIC LICENSE
-                       Version 3, 29 June 2007
+Copyright (c) 2016 Nick Potts
+Licensed to You under the GNU GPLv3
+See the LICENSE file at github.com/npotts/homehub/LICENSE
 
- Copyright (C) 2007 Free Software Foundation, Inc. <http://fsf.org/>
- Everyone is permitted to copy and distribute verbatim copies
- of this license document, but changing it is not allowed.*/
+This file is part of the HomeHub project
+*/
 
-package brainiac
+package homehub
 
 import (
 	"fmt"
@@ -16,8 +16,14 @@ import (
 	"strings"
 )
 
-/*function call to both register and store data*/
-type regstore func(datam Datam) error
+/*Stoppable is anything that can be stopped and somehow acts
+as a proxy to receieve data.*/
+type Stoppable interface {
+	Stop()
+}
+
+/*The RegStore function call either registers or stores a Datam somewhere*/
+type RegStore func(datam Datam) error
 
 //something from a-z and A-Z
 type alphabetic string
@@ -43,7 +49,7 @@ const (
 	fmDateTime
 )
 
-var errSqlType = fmt.Errorf("Unknown SQL Type")
+var errSQLType = fmt.Errorf("Unknown SQL Type")
 
 /*sqltype is functionally a look up table for known dialects to sql create types*/
 func (f fieldmode) sqltype(dialect string) (string, error) {
@@ -63,7 +69,7 @@ func (f fieldmode) sqltype(dialect string) (string, error) {
 		case fmDateTime:
 			return "DATETIME DEFAULT CURRENT_TIMESTAMP", nil
 		default:
-			return "", errSqlType
+			return "", errSQLType
 		}
 	case "postgres":
 		switch f {
@@ -80,10 +86,10 @@ func (f fieldmode) sqltype(dialect string) (string, error) {
 		case fmDateTime:
 			return "TIMESTAMP WITH TIME ZONE DEFAULT (now() at time zone 'utc')", nil
 		default:
-			return "", errSqlType
+			return "", errSQLType
 		}
 	default:
-		return "", errSqlType
+		return "", errSQLType
 	}
 
 }

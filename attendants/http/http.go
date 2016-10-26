@@ -1,10 +1,10 @@
 /*
- GNU GENERAL PUBLIC LICENSE
-                       Version 3, 29 June 2007
+Copyright (c) 2016 Nick Potts
+Licensed to You under the GNU GPLv3
+See the LICENSE file at github.com/npotts/homehub/LICENSE
 
- Copyright (C) 2007 Free Software Foundation, Inc. <http://fsf.org/>
- Everyone is permitted to copy and distribute verbatim copies
- of this license document, but changing it is not allowed.*/
+This file is part of the HomeHub project
+*/
 
 package brainiac
 
@@ -21,6 +21,8 @@ import (
 	"io"
 	"net/http"
 	"time"
+
+	"github.com/npotts/homehub"
 )
 
 //SHA1HashedPassword computes and returns a SHA1 hashed password string that can be used in HTTP Auth routines
@@ -33,21 +35,30 @@ func SHA1HashedPassword(pass string) (hashed string) {
 
 var _ = fmt.Println
 
-type httpd struct {
+/*Config is a configuration structure used for a HTTPd attendant*/
+type Config struct {
+	HTTPUser     string
+	HTTPPassword string
+	HTTPListen   string
+}
+
+/*HTTPd is a HTTP based object that listens for incoming JSON messages
+via PUT or POST on / at the listening address.*/
+type HTTPd struct {
 	httpd            *graceful.Server //stoppable server
 	mux              *mux.Router      //http router
 	negroni          *negroni.Negroni //middelware
-	regFxn, storeFxn regstore         //callback fxns
+	regFxn, storeFxn homehub.RegStore //callback fxns
 	user             string           //http info
 	pass             string           //password
 	stopper          stoppable.Halter //atomic halter
 }
 
-func newHTTP(cfg Config, reg, store regstore) (*httpd, error) {
+func newHTTP(cfg Config, reg, store homehub.RegStore) (*HTTPd, error) {
 	err := make(chan error)
 	defer close(err)
 	neg := negroni.Classic()
-	h := &httpd{
+	h := &HTTPd{
 		stopper: stoppable.NewStopable(),
 		mux:     mux.NewRouter(),
 		negroni: neg,
@@ -79,7 +90,7 @@ func newHTTP(cfg Config, reg, store regstore) (*httpd, error) {
 }
 
 /*monitor starts the HTTP server and attempts to keep it going*/
-func (h *httpd) monitor(startup chan error) {
+func (h *HTTPd) monitor(startup chan error) {
 	ecc := make(chan error)
 	go func() { ecc <- h.httpd.ListenAndServe(); close(ecc) }() //start daemon
 
@@ -91,8 +102,8 @@ func (h *httpd) monitor(startup chan error) {
 	}
 }
 
-/*stop kills the service*/
-func (h *httpd) stop() {
+/*Stop kills the service*/
+func (h *HTTPd) Stop() {
 	defer h.stopper.Die()
 	if h.stopper.Alive() {
 		c := h.httpd.StopChan()
@@ -103,7 +114,7 @@ func (h *httpd) stop() {
 }
 
 /*fill in with basic authentication validator*/
-func (h *httpd) auth(w http.ResponseWriter, r *http.Request, next http.HandlerFunc) {
+func (h *HTTPd) auth(w http.ResponseWriter, r *http.Request, next http.HandlerFunc) {
 	if _, _, ok := r.BasicAuth(); ok {
 		next(w, r)
 		return
@@ -111,16 +122,16 @@ func (h *httpd) auth(w http.ResponseWriter, r *http.Request, next http.HandlerFu
 	w.WriteHeader(http.StatusUnauthorized)
 }
 
-var errHttp = errors.New("Invalid HTTP data")
+var errHTTP = errors.New("Invalid HTTP data")
 var errNotValid = errors.New("Invalid JSON Structure")
 
 /*handleJSON breaks up json data*/
-func (h *httpd) handleJSON(r *http.Request, fxn regstore) error {
+func (h *HTTPd) handleJSON(r *http.Request, fxn homehub.RegStore) error {
 	data := make([]byte, r.ContentLength)
 	if n, err := r.Body.Read(data); int64(n) != r.ContentLength || (err != nil && err != io.EOF) {
-		return errHttp
+		return errHTTP
 	}
-	m := Datam{}
+	m := homehub.Datam{}
 
 	if err := json.Unmarshal(data, &m); err != nil {
 		return err
@@ -134,7 +145,7 @@ func (h *httpd) handleJSON(r *http.Request, fxn regstore) error {
 }
 
 /*put handles incoming data formats to register*/
-func (h *httpd) put(w http.ResponseWriter, r *http.Request) {
+func (h *HTTPd) put(w http.ResponseWriter, r *http.Request) {
 	if err := h.handleJSON(r, h.regFxn); err != nil {
 		w.WriteHeader(http.StatusBadRequest)
 		return
@@ -143,7 +154,7 @@ func (h *httpd) put(w http.ResponseWriter, r *http.Request) {
 }
 
 /*post handles 'inserting' actual data*/
-func (h *httpd) post(w http.ResponseWriter, r *http.Request) {
+func (h *HTTPd) post(w http.ResponseWriter, r *http.Request) {
 	if err := h.handleJSON(r, h.storeFxn); err != nil {
 		w.WriteHeader(http.StatusBadRequest)
 		return
@@ -152,7 +163,7 @@ func (h *httpd) post(w http.ResponseWriter, r *http.Request) {
 }
 
 /*post handles 'inserting' actual data*/
-// func (h *httpd) get(w http.ResponseWriter, r *http.Request) {
+// func (h *HTTPd) get(w http.ResponseWriter, r *http.Request) {
 // 	w.WriteHeader(200)
 // 	fmt.Fprintf(w, "Hello there")
 // }

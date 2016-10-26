@@ -1,12 +1,12 @@
 /*
- GNU GENERAL PUBLIC LICENSE
-                       Version 3, 29 June 2007
+Copyright (c) 2016 Nick Potts
+Licensed to You under the GNU GPLv3
+See the LICENSE file at github.com/npotts/homehub/LICENSE
 
- Copyright (C) 2007 Free Software Foundation, Inc. <http://fsf.org/>
- Everyone is permitted to copy and distribute verbatim copies
- of this license document, but changing it is not allowed.*/
+This file is part of the HomeHub project
+*/
 
-package brainiac
+package homehub
 
 import (
 	"encoding/json"
@@ -51,7 +51,7 @@ func TestFieldMode_SqlType(t *testing.T) {
 		}
 	}
 	run(ok, nil)
-	run(errord, errSqlType)
+	run(errord, errSQLType)
 }
 
 func TestField_UnmarshalJSON(t *testing.T) {
@@ -129,7 +129,7 @@ func TestDatam_SqlCreate(t *testing.T) {
 			},
 		},
 			dialect: "sqlite3", inerror: false,
-			expect: `CREATE TABLE IF NOT EXISTS test (rowid INTEGER PRIMARY KEY ASC ON CONFLICT REPLACE AUTOINCREMENT, created DATETIME DEFAULT CURRENT_TIMESTAMP, bool BOOL, float FLOAT, int INT, string TEXT);`,
+			expect: `CREATE TABLE IF NOT EXISTS "test" (rowid INTEGER PRIMARY KEY ASC ON CONFLICT REPLACE AUTOINCREMENT, created DATETIME DEFAULT CURRENT_TIMESTAMP, bool BOOL, float FLOAT, int INT, string TEXT);`,
 		},
 	}
 
@@ -165,7 +165,7 @@ func TestDatam_NamedExec(t *testing.T) {
 			},
 		},
 			dialect: "sqlite3", inerror: false,
-			expect: `INSERT INTO test (float) VALUES (:float);`,
+			expect: `INSERT INTO "test" (float) VALUES (:float);`,
 		},
 	}
 
