@@ -195,7 +195,7 @@ func (d *Datam) SqlCreate(dialect string) (r string, err error) {
 	}
 	labels.Sort()
 
-	r = fmt.Sprintf(`CREATE TABLE IF NOT EXISTS %s (rowid %s, created %s, %s);`, d.Table, pk, date, strings.Join(labels, ", "))
+	r = fmt.Sprintf(`CREATE TABLE IF NOT EXISTS %q (rowid %s, created %s, %s);`, d.Table, pk, date, strings.Join(labels, ", "))
 	return r, nil
 }
 
@@ -213,6 +213,6 @@ func (d *Datam) NamedExec() (r string, vals map[string]interface{}, err error) {
 		labels = append(labels, string(label))
 	}
 
-	r = fmt.Sprintf(`INSERT INTO %s (%s) VALUES (:%s);`, d.Table, strings.Join(labels, ","), strings.Join(labels, ",:"))
+	r = fmt.Sprintf(`INSERT INTO %q (%s) VALUES (:%s);`, d.Table, strings.Join(labels, ","), strings.Join(labels, ",:"))
 	return r, vals, nil
 }
