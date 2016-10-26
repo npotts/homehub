@@ -18,8 +18,8 @@ func Test_ConfigForArgs(t *testing.T) {
 		Args []string
 	}
 
-	tests := map[string]x{
-		"defaults": x{
+	tests := []x{
+		x{
 			cfg: Config{
 				Driver:       "sqlite3",
 				Source:       "brainiac.db",
@@ -35,7 +35,7 @@ func Test_ConfigForArgs(t *testing.T) {
 				ZmqListen:    "tcp://*:8081",
 			},
 		},
-		"multiple zmq allows": x{
+		x{
 			Args: []string{"-a", "host1", "-a", "host2"},
 			cfg: Config{
 				Driver:       "sqlite3",
@@ -55,7 +55,7 @@ func Test_ConfigForArgs(t *testing.T) {
 	}
 	for tname, x := range tests {
 		if c := ConfigForArgs(x.Args); !c.Equals(x.cfg) {
-			t.Logf("Checking %q", tname)
+			t.Logf("Checking #%d", tname)
 			t.Logf("Got: %v", c)
 			t.Logf("Wnt: %v", &x.cfg)
 			t.Errorf("Didnt get what I expected")

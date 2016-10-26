@@ -15,7 +15,7 @@ import (
 )
 
 /*function call to both register and store data*/
-type regstore func(table string, datam Datam) error
+type regstore func(datam Datam) error
 
 //something from a-z and A-Z
 type alphabetic string
@@ -121,8 +121,3 @@ func (d *Datam) Equal(a *Datam) bool {
 	}
 	return same
 }
-
-// listener listen on something and call registerFxn when
-// type stoppable interface {
-// 	stop()
-// }
