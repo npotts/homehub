@@ -30,6 +30,30 @@ func TestAlphabetic_Valid(t *testing.T) {
 	}
 }
 
+func TestFieldMode_SqlType(t *testing.T) {
+	ok := map[string][]fieldmode{
+		"sqlite3":  []fieldmode{fmBool, fmInt, fmFloat, fmString, fmPrimaryKey, fmDateTime},
+		"postgres": []fieldmode{fmBool, fmInt, fmFloat, fmString, fmPrimaryKey, fmDateTime},
+	}
+	errord := map[string][]fieldmode{
+		"sqlite3":  []fieldmode{fmInvalid},
+		"postgres": []fieldmode{fmInvalid},
+		"unknown":  []fieldmode{fmInvalid},
+	}
+
+	run := func(tests map[string][]fieldmode, err error) {
+		for dialect, defined := range tests {
+			for _, fm := range defined {
+				if _, e := fm.sqltype(dialect); e != err {
+					t.Errorf("Faied testing for %q:%v:  Wanted %v, got %v", dialect, fm, err, e)
+				}
+			}
+		}
+	}
+	run(ok, nil)
+	run(errord, errSqlType)
+}
+
 func TestField_UnmarshalJSON(t *testing.T) {
 	type x struct {
 		j string
@@ -84,3 +108,90 @@ func TestField_UnmarshalJSON(t *testing.T) {
 		}
 	}
 }
+
+func TestDatam_SqlCreate(t *testing.T) {
+	type x struct {
+		d       Datam
+		dialect string
+		expect  string
+		inerror bool
+	}
+
+	tests := []x{
+		x{dialect: "no idea", inerror: true},
+		x{d: Datam{
+			Table: "test",
+			Data: map[alphabetic]Field{
+				alphabetic("float"):  Field{Value: 1.0, mode: fmFloat},
+				alphabetic("string"): Field{Value: "str", mode: fmString},
+				alphabetic("int"):    Field{Value: 1, mode: fmInt},
+				alphabetic("bool"):   Field{Value: false, mode: fmBool},
+			},
+		},
+			dialect: "sqlite3", inerror: false,
+			expect: `CREATE TABLE IF NOT EXISTS test (rowid INTEGER PRIMARY KEY ASC ON CONFLICT REPLACE AUTOINCREMENT, created DATETIME DEFAULT CURRENT_TIMESTAMP, bool BOOL, float FLOAT, int INT, string TEXT);`,
+		},
+	}
+
+	for i, x := range tests {
+		r, e := x.d.SqlCreate(x.dialect)
+		t.Logf("Running test #%d: %v", i, x.d.Valid())
+		if (x.inerror && e == nil) || (!x.inerror && e != nil) {
+			t.Logf("Want an error: %v Got Error: %v", x.inerror, e)
+			t.Fatal("Should either error and didnt, or not and did")
+		}
+		if r != x.expect {
+			t.Logf("Got: %v", r)
+			t.Logf("Wnt: %v", x.expect)
+			t.Errorf("Did not get the string I expected")
+		}
+	}
+}
+
+func TestDatam_NamedExec(t *testing.T) {
+	type x struct {
+		d       Datam
+		dialect string
+		expect  string
+		inerror bool
+	}
+
+	tests := []x{
+		x{dialect: "no idea", inerror: true},
+		x{d: Datam{
+			Table: "test",
+			Data: map[alphabetic]Field{
+				alphabetic("float"): Field{Value: 1.0, mode: fmFloat},
+			},
+		},
+			dialect: "sqlite3", inerror: false,
+			expect: `INSERT INTO test (float) VALUES (:float);`,
+		},
+	}
+
+	for i, x := range tests {
+		r, vals, e := x.d.NamedExec()
+		t.Logf("Running test #%d: %v", i, vals)
+		if (x.inerror && e == nil) || (!x.inerror && e != nil) {
+			t.Logf("Want an error: %v Got Error: %v", x.inerror, e)
+			t.Fatal("Should either error and didnt, or not and did")
+		}
+		if r != x.expect {
+			t.Logf("Got: %v", r)
+			t.Logf("Wnt: %v", x.expect)
+			t.Errorf("Did not get the string I expected")
+		}
+	}
+}
+
+/*
+
+
+
+
+
+
+
+
+
+ */

@@ -11,7 +11,9 @@ package brainiac
 import (
 	"fmt"
 	"regexp"
+	"sort"
 	"strconv"
+	"strings"
 )
 
 /*function call to both register and store data*/
@@ -36,7 +38,55 @@ const (
 	fmInt
 	fmFloat
 	fmString
+	//the rest are not defined for importing via JSON, but are used internally
+	fmPrimaryKey
+	fmDateTime
 )
+
+var errSqlType = fmt.Errorf("Unknown SQL Type")
+
+/*sqltype is functionally a look up table for known dialects to sql create types*/
+func (f fieldmode) sqltype(dialect string) (string, error) {
+	switch dialect {
+	case "sqlite3":
+		switch f {
+		case fmBool:
+			return "BOOL", nil
+		case fmInt:
+			return "INT", nil
+		case fmFloat:
+			return "FLOAT", nil
+		case fmString:
+			return "TEXT", nil
+		case fmPrimaryKey:
+			return "INTEGER PRIMARY KEY ASC ON CONFLICT REPLACE AUTOINCREMENT", nil
+		case fmDateTime:
+			return "DATETIME DEFAULT CURRENT_TIMESTAMP", nil
+		default:
+			return "", errSqlType
+		}
+	case "postgres":
+		switch f {
+		case fmBool:
+			return "BOOLEAN", nil
+		case fmInt:
+			return "BIGINT", nil
+		case fmFloat:
+			return "FLOAT8", nil
+		case fmString:
+			return "TEXT", nil
+		case fmPrimaryKey:
+			return "BIGSERIAL PRIMARY KEY", nil
+		case fmDateTime:
+			return "TIMESTAMP WITH TIME ZONE DEFAULT (now() at time zone 'utc')", nil
+		default:
+			return "", errSqlType
+		}
+	default:
+		return "", errSqlType
+	}
+
+}
 
 /*Field is a JSON parsable*/
 type Field struct {
@@ -120,4 +170,49 @@ func (d *Datam) Equal(a *Datam) bool {
 		same = same && key.Valid() && val.Valid() && ok
 	}
 	return same
+}
+
+/*SQLCreate forms a SQL statement to store the datam into somde database. It will
+prepend a primary key 'rowid' key, timestamp as createdat and any additional data.
+Dialect should be one of the following:
+ - "sqlite3"
+ - "postgres"
+Others have yet to be defined
+*/
+func (d *Datam) SqlCreate(dialect string) (r string, err error) {
+	pk, err1 := fmPrimaryKey.sqltype(dialect)
+	date, err2 := fmDateTime.sqltype(dialect)
+	if err1 != nil || err2 != nil || !d.Valid() {
+		return "", fmt.Errorf("Cannot form SqlCreate")
+	}
+
+	//fetch labels and sort them
+	labels := sort.StringSlice{}
+	for label, val := range d.Data {
+		if txpt, err := val.mode.sqltype(dialect); err == nil {
+			labels = append(labels, fmt.Sprintf("%s %s", label, txpt))
+		}
+	}
+	labels.Sort()
+
+	r = fmt.Sprintf(`CREATE TABLE IF NOT EXISTS %s (rowid %s, created %s, %s);`, d.Table, pk, date, strings.Join(labels, ", "))
+	return r, nil
+}
+
+/*NamedExec returns a SQL statement can be be fed into a sqlx.NamedExec along with a set of matching values,
+and a non-nil error if it cannot form such a statement.*/
+func (d *Datam) NamedExec() (r string, vals map[string]interface{}, err error) {
+	if !d.Valid() || len(d.Data) == 0 {
+		return "", nil, fmt.Errorf("Cannot insert invalid data")
+	}
+	vals = map[string]interface{}{}
+	//fetch labels and sort them
+	labels := []string{}
+	for label, value := range d.Data {
+		vals[string(label)] = value.Value
+		labels = append(labels, string(label))
+	}
+
+	r = fmt.Sprintf(`INSERT INTO %s (%s) VALUES (:%s);`, d.Table, strings.Join(labels, ","), strings.Join(labels, ",:"))
+	return r, vals, nil
 }
