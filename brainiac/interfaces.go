@@ -177,7 +177,7 @@ prepend a primary key 'rowid' key, timestamp as createdat and any additional dat
 Dialect should be one of the following:
  - "sqlite3"
  - "postgres"
-Others have yet to be defined
+Others have yet to be defined, but should be added to fieldmode.sqltype()
 */
 func (d *Datam) SqlCreate(dialect string) (r string, err error) {
 	pk, err1 := fmPrimaryKey.sqltype(dialect)
