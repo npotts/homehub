@@ -25,13 +25,13 @@ type Stoppable interface {
 /*The RegStore function call either registers or stores a Datam somewhere*/
 type RegStore func(datam Datam) error
 
-//something from a-z and A-Z
-type alphabetic string
+//Alphabetic is something from a-z and A-Z
+type Alphabetic string
 
 var realph = regexp.MustCompile("^[a-zA-Z]+$")
 
 /*Valid returns true only if it contains valid characters*/
-func (a alphabetic) Valid() bool {
+func (a Alphabetic) Valid() bool {
 	return realph.MatchString(string(a))
 }
 
@@ -151,8 +151,8 @@ func (f *Field) UnmarshalJSON(incoming []byte) (err error) {
 
 /*Datam is what all insertable things should map to*/
 type Datam struct {
-	Table alphabetic           `json:"table"`
-	Data  map[alphabetic]Field `json:"data"`
+	Table Alphabetic           `json:"table"`
+	Data  map[Alphabetic]Field `json:"data"`
 }
 
 /*Valid is true if the fields in Datam are valid*/

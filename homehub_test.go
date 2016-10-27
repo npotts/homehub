@@ -24,7 +24,7 @@ func TestAlphabetic_Valid(t *testing.T) {
 	}
 
 	for str, valid := range tests {
-		if v := alphabetic(str).Valid(); v != valid {
+		if v := Alphabetic(str).Valid(); v != valid {
 			t.Errorf("With %q, expected %v, got %v", str, valid, v)
 		}
 	}
@@ -63,12 +63,12 @@ func TestField_UnmarshalJSON(t *testing.T) {
 	}
 
 	tests := map[string]x{
-		"fmNull":      x{v: true, e: nil, j: `{"table": "ntable", "data": {"null": null}}`, d: &Datam{Table: "ntable", Data: map[alphabetic]Field{alphabetic("null"): Field{Value: nil, mode: fmNull}}}},
-		"fmBool":      x{v: true, e: nil, j: `{"table": "btable", "data": {"bool": false}}`, d: &Datam{Table: "btable", Data: map[alphabetic]Field{alphabetic("bool"): Field{Value: false, mode: fmBool}}}},
-		"fmInt":       x{v: true, e: nil, j: `{"table": "itable", "data": {"int": 1}}`, d: &Datam{Table: "itable", Data: map[alphabetic]Field{alphabetic("int"): Field{Value: int64(1), mode: fmInt}}}},
-		"fmFloat":     x{v: true, e: nil, j: `{"table": "ftable", "data": {"float": 1.0}}`, d: &Datam{Table: "ftable", Data: map[alphabetic]Field{alphabetic("float"): Field{Value: 1.0, mode: fmFloat}}}},
-		"fmString":    x{v: true, e: nil, j: `{"table": "stable", "data": {"string": "str"}}`, d: &Datam{Table: "stable", Data: map[alphabetic]Field{alphabetic("string"): Field{Value: "str", mode: fmString}}}},
-		"shortString": x{v: true, e: nil, j: `{"table": "stable", "data": {"string": ""}}`, d: &Datam{Table: "stable", Data: map[alphabetic]Field{alphabetic("string"): Field{Value: "", mode: fmString}}}},
+		"fmNull":      x{v: true, e: nil, j: `{"table": "ntable", "data": {"null": null}}`, d: &Datam{Table: "ntable", Data: map[Alphabetic]Field{Alphabetic("null"): Field{Value: nil, mode: fmNull}}}},
+		"fmBool":      x{v: true, e: nil, j: `{"table": "btable", "data": {"bool": false}}`, d: &Datam{Table: "btable", Data: map[Alphabetic]Field{Alphabetic("bool"): Field{Value: false, mode: fmBool}}}},
+		"fmInt":       x{v: true, e: nil, j: `{"table": "itable", "data": {"int": 1}}`, d: &Datam{Table: "itable", Data: map[Alphabetic]Field{Alphabetic("int"): Field{Value: int64(1), mode: fmInt}}}},
+		"fmFloat":     x{v: true, e: nil, j: `{"table": "ftable", "data": {"float": 1.0}}`, d: &Datam{Table: "ftable", Data: map[Alphabetic]Field{Alphabetic("float"): Field{Value: 1.0, mode: fmFloat}}}},
+		"fmString":    x{v: true, e: nil, j: `{"table": "stable", "data": {"string": "str"}}`, d: &Datam{Table: "stable", Data: map[Alphabetic]Field{Alphabetic("string"): Field{Value: "str", mode: fmString}}}},
+		"shortString": x{v: true, e: nil, j: `{"table": "stable", "data": {"string": ""}}`, d: &Datam{Table: "stable", Data: map[Alphabetic]Field{Alphabetic("string"): Field{Value: "", mode: fmString}}}},
 		//some error varieties
 		"array": x{v: false, e: errFormat, j: `{"table": "bad", "data": {"array": [1,2,3]}}`},
 		"obj":   x{v: false, e: errFormat, j: `{"table": "bad", "data": {"obj": {}}}`},
@@ -77,12 +77,12 @@ func TestField_UnmarshalJSON(t *testing.T) {
 			j: `{"table": "table", "data": {"float": 1.0, "string": "str", "int": 1, "bool": false, "null":null}}`,
 			d: &Datam{
 				Table: "table",
-				Data: map[alphabetic]Field{
-					alphabetic("float"):  Field{Value: 1.0, mode: fmFloat},
-					alphabetic("string"): Field{Value: "str", mode: fmString},
-					alphabetic("int"):    Field{Value: 1, mode: fmInt},
-					alphabetic("bool"):   Field{Value: false, mode: fmBool},
-					alphabetic("null"):   Field{Value: nil, mode: fmNull},
+				Data: map[Alphabetic]Field{
+					Alphabetic("float"):  Field{Value: 1.0, mode: fmFloat},
+					Alphabetic("string"): Field{Value: "str", mode: fmString},
+					Alphabetic("int"):    Field{Value: 1, mode: fmInt},
+					Alphabetic("bool"):   Field{Value: false, mode: fmBool},
+					Alphabetic("null"):   Field{Value: nil, mode: fmNull},
 				},
 			},
 		},
@@ -121,11 +121,11 @@ func TestDatam_SqlCreate(t *testing.T) {
 		x{dialect: "no idea", inerror: true},
 		x{d: Datam{
 			Table: "test",
-			Data: map[alphabetic]Field{
-				alphabetic("float"):  Field{Value: 1.0, mode: fmFloat},
-				alphabetic("string"): Field{Value: "str", mode: fmString},
-				alphabetic("int"):    Field{Value: 1, mode: fmInt},
-				alphabetic("bool"):   Field{Value: false, mode: fmBool},
+			Data: map[Alphabetic]Field{
+				Alphabetic("float"):  Field{Value: 1.0, mode: fmFloat},
+				Alphabetic("string"): Field{Value: "str", mode: fmString},
+				Alphabetic("int"):    Field{Value: 1, mode: fmInt},
+				Alphabetic("bool"):   Field{Value: false, mode: fmBool},
 			},
 		},
 			dialect: "sqlite3", inerror: false,
@@ -160,8 +160,8 @@ func TestDatam_NamedExec(t *testing.T) {
 		x{dialect: "no idea", inerror: true},
 		x{d: Datam{
 			Table: "test",
-			Data: map[alphabetic]Field{
-				alphabetic("float"): Field{Value: 1.0, mode: fmFloat},
+			Data: map[Alphabetic]Field{
+				Alphabetic("float"): Field{Value: 1.0, mode: fmFloat},
 			},
 		},
 			dialect: "sqlite3", inerror: false,
