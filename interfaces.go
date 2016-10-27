@@ -17,7 +17,7 @@ type Attendant interface {
 /*A Backend supports multiple attendants that gather
 messages by various means*/
 type Backend interface {
-	Register(Datam) //registers a datam
-	Store(Datam)    //Stores datam
-	Stop()          //cease operations
+	Register(Datam) error //registers a datam
+	Store(Datam) error    //Stores datam
+	Stop()                //cease operations
 }
