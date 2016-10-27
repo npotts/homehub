@@ -21,3 +21,14 @@ type Backend interface {
 	Store(Datam) error    //Stores datam
 	Stop()                //cease operations
 }
+
+/*GoodSample is a sample of a good Datam*/
+var GoodSample = Datam{
+	Table: "test",
+	Data: map[Alphabetic]Field{
+		Alphabetic("float"):  Field{Value: 1.0, mode: fmFloat},
+		Alphabetic("string"): Field{Value: "str", mode: fmString},
+		Alphabetic("int"):    Field{Value: 1, mode: fmInt},
+		Alphabetic("bool"):   Field{Value: false, mode: fmBool},
+	},
+}
