@@ -18,28 +18,34 @@ import (
 	"github.com/npotts/homehub"
 )
 
-var _ = fmt.Fscan
+type fake struct{}
 
-var hconfig = Config{
-	HTTPListen:   ":4549",
-	HTTPUser:     "brainiac",
-	HTTPPassword: "brainiac",
+func (fake) Register(datam homehub.Datam) error {
+	return nil
 }
+func (fake) Store(datam homehub.Datam) error {
+	return nil
+}
+func (fake) Stop() {}
+
+var (
+	_        = fmt.Fscan
+	listen   = ":4549"
+	user     = "brainiac"
+	password = "brainiac"
+	faker    = &fake{}
+)
 
 var hdatam homehub.Datam
 
-func reg(datam homehub.Datam) error {
-	hdatam = datam
-	return nil
-}
-
-func store(datam homehub.Datam) error {
-	hdatam = datam
-	return nil
+func getter() (h *HTTPd, e error) {
+	h, e = new(listen, user, password)
+	h.Use(faker)
+	return h, e
 }
 
 func Test_newHTTP(t *testing.T) {
-	h, e := newHTTP(hconfig, reg, store)
+	h, e := getter()
 	if e != nil {
 		t.Fatalf("Unable to start: %v", e)
 	}
@@ -47,7 +53,7 @@ func Test_newHTTP(t *testing.T) {
 		defer h.Stop()
 	}
 
-	h2, e2 := newHTTP(hconfig, reg, store)
+	h2, e2 := Attendant(listen, user, password)
 	if e2 == nil {
 		defer h2.Stop()
 		t.Errorf("Should not be able to start 2 servers on same port")
@@ -55,7 +61,7 @@ func Test_newHTTP(t *testing.T) {
 }
 
 func TestHTTP_Auth(t *testing.T) {
-	h, e := newHTTP(hconfig, reg, store)
+	h, e := getter()
 	if e != nil {
 		t.Fatalf("Unable to start: %v", e)
 	}
@@ -67,7 +73,7 @@ func TestHTTP_Auth(t *testing.T) {
 	}
 	//access routes
 	w := httptest.NewRecorder()
-	r, _ := http.NewRequest("GET", fmt.Sprintf("http://%s/", hconfig.HTTPListen), strings.NewReader(""))
+	r, _ := http.NewRequest("GET", fmt.Sprintf("http://%s/", listen), strings.NewReader(""))
 
 	h.auth(w, r, next)
 	if w.Code != http.StatusUnauthorized || accessed {
@@ -76,7 +82,7 @@ func TestHTTP_Auth(t *testing.T) {
 	accessed = false
 
 	w = httptest.NewRecorder()
-	req, _ := http.NewRequest("PUT", fmt.Sprintf("http://%s/", hconfig.HTTPListen), strings.NewReader(""))
+	req, _ := http.NewRequest("PUT", fmt.Sprintf("http://%s/", listen), strings.NewReader(""))
 	req.SetBasicAuth(h.user, h.pass)
 	h.auth(w, req, next)
 	if !accessed {
@@ -85,7 +91,7 @@ func TestHTTP_Auth(t *testing.T) {
 }
 
 func TestHTTP_handleJSON(t *testing.T) {
-	h, e := newHTTP(hconfig, reg, store)
+	h, e := getter()
 	if e != nil {
 		t.Fatalf("Unable to start: %v", e)
 	}
@@ -110,7 +116,7 @@ func TestHTTP_handleJSON(t *testing.T) {
 
 	reqForX := func(x x) *http.Request {
 		called = false
-		r, _ := http.NewRequest(x.method, fmt.Sprintf("http://%s%s", hconfig.HTTPListen, x.route), strings.NewReader(x.json))
+		r, _ := http.NewRequest(x.method, fmt.Sprintf("http://%s%s", listen, x.route), strings.NewReader(x.json))
 		r.SetBasicAuth(h.user, h.pass)
 		if x.length > 0 {
 			r.ContentLength = x.length
@@ -136,14 +142,14 @@ func TestHTTP_handleJSON(t *testing.T) {
 }
 
 func TestHTTP_putpost(t *testing.T) {
-	h, e := newHTTP(hconfig, reg, store)
+	h, e := getter()
 	if e != nil {
 		t.Fatalf("Unable to start: %v", e)
 	}
 	defer h.Stop()
 	client := http.Client{}
 	getReqs := func(body string) (put *http.Request, post *http.Request) {
-		url := fmt.Sprintf("http://localhost%s/", hconfig.HTTPListen)
+		url := fmt.Sprintf("http://localhost%s/", listen)
 		fmt.Println("url=", url)
 		if put, _ = http.NewRequest("PUT", url, strings.NewReader(body)); e != nil {
 			t.Error(e)

@@ -35,47 +35,50 @@ func SHA1HashedPassword(pass string) (hashed string) {
 
 var _ = fmt.Println
 
-/*Config is a configuration structure used for a HTTPd attendant*/
-type Config struct {
-	HTTPUser     string
-	HTTPPassword string
-	HTTPListen   string
-}
-
 /*HTTPd is a HTTP based object that listens for incoming JSON messages
 via PUT or POST on / at the listening address.*/
 type HTTPd struct {
-	httpd            *graceful.Server //stoppable server
-	mux              *mux.Router      //http router
-	negroni          *negroni.Negroni //middelware
-	regFxn, storeFxn homehub.RegStore //callback fxns
-	user             string           //http info
-	pass             string           //password
-	stopper          stoppable.Halter //atomic halter
+	httpd   *graceful.Server //stoppable server
+	mux     *mux.Router      //http router
+	negroni *negroni.Negroni //middelware
+	// regFxn, storeFxn homehub.RegStore //callback fxns
+	user    string           //http info
+	pass    string           //password
+	stopper stoppable.Halter //atomic halter
+	backend homehub.Backend  //storage backend
 }
 
-func newHTTP(cfg Config, reg, store homehub.RegStore) (*HTTPd, error) {
+/*Attendant returns a homehub.Attendant and a nil error*/
+func Attendant(listen, user, password string) (homehub.Attendant, error) {
+	return new(listen, user, password)
+}
+
+/*Use sets the backend*/
+func (h *HTTPd) Use(backend homehub.Backend) {
+	h.backend = backend
+}
+
+func new(listen, user, password string) (*HTTPd, error) {
 	err := make(chan error)
 	defer close(err)
 	neg := negroni.Classic()
 	h := &HTTPd{
+		backend: nil,
 		stopper: stoppable.NewStopable(),
 		mux:     mux.NewRouter(),
 		negroni: neg,
 		httpd: &graceful.Server{
 			Timeout: 100 * time.Millisecond, //no timeout, which has its own set of issues
 			Server: &http.Server{
-				Addr:           cfg.HTTPListen,
+				Addr:           listen,
 				Handler:        neg,
 				ReadTimeout:    1 * time.Second,
 				WriteTimeout:   1 * time.Second,
 				MaxHeaderBytes: 1024 * 1024 * 1024 * 10, //10meg
 			},
 		},
-		regFxn:   reg,
-		storeFxn: store,
-		user:     cfg.HTTPUser,
-		pass:     SHA1HashedPassword(cfg.HTTPPassword),
+		user: user,
+		pass: SHA1HashedPassword(password),
 	}
 	h.mux.HandleFunc("/", h.put).Methods("PUT")
 	h.mux.HandleFunc("/", h.post).Methods("POST")
@@ -146,7 +149,7 @@ func (h *HTTPd) handleJSON(r *http.Request, fxn homehub.RegStore) error {
 
 /*put handles incoming data formats to register*/
 func (h *HTTPd) put(w http.ResponseWriter, r *http.Request) {
-	if err := h.handleJSON(r, h.regFxn); err != nil {
+	if err := h.handleJSON(r, h.backend.Register); err != nil {
 		w.WriteHeader(http.StatusBadRequest)
 		return
 	}
@@ -155,7 +158,7 @@ func (h *HTTPd) put(w http.ResponseWriter, r *http.Request) {
 
 /*post handles 'inserting' actual data*/
 func (h *HTTPd) post(w http.ResponseWriter, r *http.Request) {
-	if err := h.handleJSON(r, h.storeFxn); err != nil {
+	if err := h.handleJSON(r, h.backend.Store); err != nil {
 		w.WriteHeader(http.StatusBadRequest)
 		return
 	}
