@@ -6,7 +6,7 @@ See the LICENSE file at github.com/npotts/homehub/LICENSE
 This file is part of the HomeHub project
 */
 
-package database
+package sql
 
 import (
 	"github.com/jmoiron/sqlx"
