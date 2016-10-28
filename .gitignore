@@ -27,3 +27,9 @@ _testmain.go
 cover.html
 cover.out
 *.sublime-workspace
+
+
+*.db
+*.pid
+curl.data
+
