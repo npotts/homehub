@@ -6,7 +6,7 @@ See the LICENSE file at github.com/npotts/homehub/LICENSE
 This file is part of the HomeHub project
 */
 
-package brainiac
+package http
 
 import (
 	"crypto/sha1"
@@ -19,7 +19,9 @@ import (
 	"github.com/tylerb/graceful"
 	"github.com/urfave/negroni"
 	"io"
+	"log"
 	"net/http"
+	"os"
 	"time"
 
 	"github.com/npotts/homehub"
@@ -31,6 +33,22 @@ func SHA1HashedPassword(pass string) (hashed string) {
 	io.WriteString(hasher, pass)
 	hashed = "{SHA}" + base64.StdEncoding.EncodeToString(hasher.Sum(nil))
 	return
+}
+
+type logger struct {
+	// ALogger implements just enough log.Logger interface to be compatible with other implementations
+	logger *log.Logger
+}
+
+func (l *logger) ServeHTTP(rw http.ResponseWriter, r *http.Request, next http.HandlerFunc) {
+	start := time.Now()
+	next(rw, r)
+	if res, ok := rw.(negroni.ResponseWriter); ok {
+		l.logger.Printf("%s %v from %v [%v %s] in %v", r.Method, r.URL.Path, r.Host, res.Status(), http.StatusText(res.Status()), time.Since(start))
+		return
+	}
+	l.logger.Printf("%s %v from %v in %v", r.Method, r.URL.Path, r.Host, time.Since(start))
+
 }
 
 var _ = fmt.Println
@@ -46,6 +64,8 @@ type HTTPd struct {
 	pass    string           //password
 	stopper stoppable.Halter //atomic halter
 	backend homehub.Backend  //storage backend
+	stats   map[homehub.Alphabetic]int
+	logger  *logger
 }
 
 /*Attendant returns a homehub.Attendant and a nil error*/
@@ -61,12 +81,15 @@ func (h *HTTPd) Use(backend homehub.Backend) {
 func new(listen, user, password string) (*HTTPd, error) {
 	err := make(chan error)
 	defer close(err)
-	neg := negroni.Classic()
+	recovery := negroni.NewRecovery()
+	logger := &logger{logger: log.New(os.Stdout, "[http] ", 0)}
+	neg := negroni.New(recovery, logger)
 	h := &HTTPd{
 		backend: nil,
 		stopper: stoppable.NewStopable(),
 		mux:     mux.NewRouter(),
 		negroni: neg,
+		logger:  logger,
 		httpd: &graceful.Server{
 			Timeout: 100 * time.Millisecond, //no timeout, which has its own set of issues
 			Server: &http.Server{
@@ -77,13 +100,15 @@ func new(listen, user, password string) (*HTTPd, error) {
 				MaxHeaderBytes: 1024 * 1024 * 1024 * 10, //10meg
 			},
 		},
-		user: user,
-		pass: SHA1HashedPassword(password),
+		user:  user,
+		pass:  SHA1HashedPassword(password),
+		stats: map[homehub.Alphabetic]int{},
 	}
 	h.mux.HandleFunc("/", h.put).Methods("PUT")
 	h.mux.HandleFunc("/", h.post).Methods("POST")
-	// h.mux.HandleFunc("/", h.get).Methods("GET") //Version info eventually?
-	if h.pass != "" && h.user != "" {
+	h.mux.HandleFunc("/", h.get).Methods("GET") //Version info eventually?
+	if password != "" && h.user != "" {
+		h.logger.logger.Printf("Using Password %s:%s\n", h.user, h.pass)
 		h.negroni.UseFunc(h.auth)
 	}
 	h.negroni.UseHandler(h.mux)
@@ -141,6 +166,7 @@ func (h *HTTPd) handleJSON(r *http.Request, fxn homehub.RegStore) error {
 	}
 
 	if m.Valid() {
+		h.stats[m.Table]++
 		return fxn(m)
 	}
 	return errNotValid
@@ -166,7 +192,7 @@ func (h *HTTPd) post(w http.ResponseWriter, r *http.Request) {
 }
 
 /*post handles 'inserting' actual data*/
-// func (h *HTTPd) get(w http.ResponseWriter, r *http.Request) {
-// 	w.WriteHeader(200)
-// 	fmt.Fprintf(w, "Hello there")
-// }
+func (h *HTTPd) get(w http.ResponseWriter, r *http.Request) {
+	w.WriteHeader(200)
+	fmt.Fprintf(w, "Stats: %v", h.stats)
+}
