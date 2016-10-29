@@ -28,7 +28,7 @@ type RegStore func(datam Datam) error
 //Alphabetic is something from a-z and A-Z
 type Alphabetic string
 
-var realph = regexp.MustCompile("^[a-zA-Z]+$")
+var realph = regexp.MustCompile("^[a-zA-Z]+[0-9]?$")
 
 /*Valid returns true only if it contains valid characters*/
 func (a Alphabetic) Valid() bool {
