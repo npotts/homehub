@@ -23,9 +23,9 @@ is planned to also have a ZMQv4 setup
 package mango
 
 import (
+	"encoding/json"
 	"github.com/go-mangos/mangos"
 	"github.com/go-mangos/mangos/protocol/rep"
-	"github.com/go-mangos/mangos/protocol/req"
 	"github.com/go-mangos/mangos/transport/ipc"
 	"github.com/go-mangos/mangos/transport/tcp"
 	"github.com/npotts/go-patterns/stoppable"
@@ -59,10 +59,38 @@ func New(url string) (r *Rep, err error) {
 	return r, <-cerr
 }
 
+/*Error is the string sent if an error was encountered*/
+var Error = []byte("error")
+
+/*Ok is the 'ok' response if successful*/
+var Ok = []byte("ok")
+
 func (r *Rep) monitor(cerr chan error) {
 	cerr <- nil
 	for r.stpr.Alive() {
 		msg, err := r.sock.Recv()
+		if err != nil {
+			r.sock.Send(Error)
+			continue
+		}
 
+		datam := homehub.Datam{}
+		json.Unmarshal(msg, &datam)
+
+		if !datam.Valid() {
+			r.sock.Send(Error)
+			continue
+		}
+
+		if r.be.Register(datam) != nil {
+			r.sock.Send(Error)
+			continue
+		}
+
+		if r.be.Store(datam) == nil {
+			r.sock.Send(Ok)
+			continue
+		}
+		r.sock.Send(Error)
 	}
 }
