@@ -27,8 +27,8 @@ var (
 	dbsource = app.Flag("source", `Source of the database, usually something like "file.db", ":memory:", "postgres://user:password@server/database"`).Short('s').Default("brainiac.db").String()
 
 	// listenHTTP   = app.Flag("http", `Listen for requests over HTTP`).Short('H').Default("False").Bool()
-	httpUser     = app.Flag("user", `Username to require for over HTTP.  Empty string means disable`).Short('l').Default("brianiac").String()
-	httpPassword = app.Flag("password", `Password for login over HTTP`).Short('p').Default("brainiac").String()
+	httpUser     = app.Flag("user", `Username to require for over HTTP.  Empty string means disable`).Short('l').Default("").String()
+	httpPassword = app.Flag("password", `Password for login over HTTP`).Short('p').Default("").String()
 	httpListen   = app.Flag("http-listen", `Listen Dial address.  Usually something like "localhost:9090" or "*:2442"`).Short('P').Default(":8080").TCP()
 
 	// listenUDP = app.Flag("udp", `Listen for requests over UDP`).Short('u').Default("False").Bool()
