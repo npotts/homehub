@@ -107,7 +107,7 @@ func (f Field) Valid() bool {
 
 var (
 	reNull    = regexp.MustCompile("^null$")
-	reInt     = regexp.MustCompile(`^-?0|[1-9]\d*$`)
+	reInt     = regexp.MustCompile(`^-?(0|[1-9])+[0-9]*$`)
 	reBool    = regexp.MustCompile(`^true|false$`)
 	reNumber  = regexp.MustCompile(`^-?(?:0|[1-9]\d*)(?:\.\d+)?(?:[eE][+-]?\d+)?`)
 	reString  = regexp.MustCompile(`^".*"$`)
