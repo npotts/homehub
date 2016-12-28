@@ -44,6 +44,8 @@ func (q *SQLBackend) Register(datam homehub.Datam) error {
 	if err != nil {
 		return err
 	}
+	//convert ?'s to whatever is natively used
+	sql = q.db.Rebind(sql)
 	_, err = q.db.Exec(sql)
 	return err
 }
@@ -55,6 +57,8 @@ func (q *SQLBackend) Store(datam homehub.Datam) error {
 	if err != nil {
 		return err
 	}
+	//convert ? -> whatever is natively used
+	query = q.db.Rebind(query)
 	_, err = q.db.NamedExec(query, args)
 	return err
 }
