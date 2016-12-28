@@ -191,7 +191,7 @@ func (h *HTTPd) post(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusOK)
 }
 
-/*post handles 'inserting' actual data*/
+/*get handles returning some stats*/
 func (h *HTTPd) get(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(200)
 	fmt.Fprintf(w, "Stats: %v", h.stats)
