@@ -166,8 +166,11 @@ func (h *HTTPd) handleJSON(r *http.Request, fxn homehub.RegStore) error {
 	}
 
 	if m.Valid() {
-		h.stats[m.Table]++
-		return fxn(m)
+    e := fxn(m)
+    if e == nil {
+      h.stats[m.Table]++
+    }
+		return e
 	}
 	return errNotValid
 
