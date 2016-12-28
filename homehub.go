@@ -99,7 +99,7 @@ func (f fieldmode) sqltype(dialect string) (string, error) {
 		case fmString:
 			return "TEXT", nil
 		case fmPrimaryKey:
-			return "INTEGER PRIMARY KEY ASC ON CONFLICT REPLACE AUTOINCREMENT", nil
+			return "INTEGER PRIMARY KEY NOT NULL AUTO_INCREMENT", nil
 		case fmDateTime:
 			return "DATETIME DEFAULT CURRENT_TIMESTAMP", nil
 		default:
@@ -218,7 +218,7 @@ func (d *Datam) SqlCreate(dialect string) (r string, err error) {
 	}
 	labels.Sort()
 
-	r = fmt.Sprintf(`CREATE TABLE IF NOT EXISTS %q (rowid %s, created %s, %s);`, d.Table, pk, date, strings.Join(labels, ", "))
+	r = fmt.Sprintf(`CREATE TABLE IF NOT EXISTS %s (rowid %s, created %s, %s);`, d.Table, pk, date, strings.Join(labels, ", "))
 	return r, nil
 }
 
@@ -236,13 +236,6 @@ func (d *Datam) NamedExec() (r string, vals map[string]interface{}, err error) {
 		labels = append(labels, string(label))
 	}
 
-
-
-  ss := "?"
-  for i:=1; i<len(labels); i++ {
-      ss += "?,"
-  }
-  r = fmt.Sprintf(`INSERT INTO %q (%s) VALUES (:%s);`, d.Table, strings.Join(labels, ","), ss)
-	//r = fmt.Sprintf(`INSERT INTO %q (%s) VALUES (:%s);`, d.Table, strings.Join(labels, ","), strings.Join(labels, ",:"))
+	r = fmt.Sprintf(`INSERT INTO %s (%s) VALUES (:%s);`, d.Table, strings.Join(labels, ","), strings.Join(labels, ",:"))
 	return r, vals, nil
 }
