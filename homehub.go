@@ -88,6 +88,23 @@ func (f fieldmode) sqltype(dialect string) (string, error) {
 		default:
 			return "", errSQLType
 		}
+	case "mysql":
+		switch f {
+		case fmBool:
+			return "BOOLEAN", nil
+		case fmInt:
+			return "BIGINT", nil
+		case fmFloat:
+			return "DOUBLE", nil
+		case fmString:
+			return "TEXT", nil
+		case fmPrimaryKey:
+			return "INTEGER PRIMARY KEY ASC ON CONFLICT REPLACE AUTOINCREMENT", nil
+		case fmDateTime:
+			return "DATETIME DEFAULT CURRENT_TIMESTAMP", nil
+		default:
+			return "", errSQLType
+		}
 	default:
 		return "", errSQLType
 	}
@@ -219,6 +236,13 @@ func (d *Datam) NamedExec() (r string, vals map[string]interface{}, err error) {
 		labels = append(labels, string(label))
 	}
 
-	r = fmt.Sprintf(`INSERT INTO %q (%s) VALUES (:%s);`, d.Table, strings.Join(labels, ","), strings.Join(labels, ",:"))
+
+
+  ss := "?"
+  for i:=1; i<len(labels); i++ {
+      ss += "?,"
+  }
+  r = fmt.Sprintf(`INSERT INTO %q (%s) VALUES (:%s);`, d.Table, strings.Join(labels, ","), ss)
+	//r = fmt.Sprintf(`INSERT INTO %q (%s) VALUES (:%s);`, d.Table, strings.Join(labels, ","), strings.Join(labels, ",:"))
 	return r, vals, nil
 }
