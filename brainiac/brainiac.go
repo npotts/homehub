@@ -20,8 +20,8 @@ import (
 )
 
 var (
-	app     = kingpin.New("brianiac", "HomeHub's Database Agent")
-	pidlock = app.Flag("pid", `Path to PID file`).Short('i').Default("brianiac.pid").String()
+	app     = kingpin.New("brainiac", "HomeHub's Database Agent")
+	pidlock = app.Flag("pid", `Path to PID file`).Short('i').Default("brainiac.pid").String()
 
 	dbdriver = app.Flag("driver", "Specify the drive to use.  One of 'sqlite3', 'postgres' or 'mysql'").Short('d').Default("sqlite3").String()
 	dbsource = app.Flag("source", `Source of the database, usually something like "file.db", ":memory:", "postgres://user:password@server/database"`).Short('s').Default("brainiac.db").String()
