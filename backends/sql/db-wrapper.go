@@ -9,6 +9,7 @@ This file is part of the HomeHub project
 package sql
 
 import (
+	_ "github.com/go-sql-driver/mysql" //mysql support
 	"github.com/jmoiron/sqlx"
 	_ "github.com/lib/pq"           //postgres support
 	_ "github.com/mattn/go-sqlite3" //sqlite3  support
